@@ -1,0 +1,46 @@
+
+{
+	"buildFiles" : [ "/Users/boonseng/Playground/myopencv/app/CMakeLists.txt" ],
+	"cleanCommands" : 
+	[
+		"/Users/boonseng/Android/sdk/cmake/3.6.4111459/bin/cmake --build /Users/boonseng/Playground/myopencv/app/.externalNativeBuild/cmake/release/armeabi --target clean"
+	],
+	"cppFileExtensions" : [ "cpp" ],
+	"libraries" : 
+	{
+		"lib_opencv-Release-armeabi" : 
+		{
+			"abi" : "armeabi",
+			"artifactName" : "lib_opencv",
+			"buildType" : "release",
+			"output" : "/Users/boonseng/Playground/myopencv/app/src/main/jniLibs/armeabi/libopencv_java3.so",
+			"toolchain" : "16375800869329321185"
+		},
+		"native-lib-Release-armeabi" : 
+		{
+			"abi" : "armeabi",
+			"artifactName" : "native-lib",
+			"buildCommand" : "/Users/boonseng/Android/sdk/cmake/3.6.4111459/bin/cmake --build /Users/boonseng/Playground/myopencv/app/.externalNativeBuild/cmake/release/armeabi --target native-lib",
+			"buildType" : "release",
+			"files" : 
+			[
+				
+				{
+					"flags" : "  --target=armv5te-none-linux-androideabi --gcc-toolchain=/Users/boonseng/Android/sdk/ndk-bundle/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64 --sysroot=/Users/boonseng/Android/sdk/ndk-bundle/sysroot  -Dnative_lib_EXPORTS -I/Users/boonseng/Android/OpenCV-android-sdk/sdk/native/jni/include -isystem /Users/boonseng/Android/sdk/ndk-bundle/sources/cxx-stl/gnu-libstdc++/4.9/include -isystem /Users/boonseng/Android/sdk/ndk-bundle/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi/include -isystem /Users/boonseng/Android/sdk/ndk-bundle/sources/cxx-stl/gnu-libstdc++/4.9/include/backward  -isystem /Users/boonseng/Android/sdk/ndk-bundle/sysroot/usr/include/arm-linux-androideabi -D__ANDROID_API__=21 -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -march=armv5te -mtune=xscale -msoft-float -fno-integrated-as -mthumb -Wa,--noexecstack -Wformat -Werror=format-security  -frtti -fexceptions -Os -DNDEBUG  -fPIC    -c ",
+					"src" : "/Users/boonseng/Playground/myopencv/app/src/main/cpp/native-lib.cpp",
+					"workingDirectory" : "/Users/boonseng/Playground/myopencv/app/.externalNativeBuild/cmake/release/armeabi"
+				}
+			],
+			"output" : "/Users/boonseng/Playground/myopencv/app/build/intermediates/cmake/release/obj/armeabi/libnative-lib.so",
+			"toolchain" : "16375800869329321185"
+		}
+	},
+	"toolchains" : 
+	{
+		"16375800869329321185" : 
+		{
+			"cCompilerExecutable" : "/Users/boonseng/Android/sdk/ndk-bundle/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang",
+			"cppCompilerExecutable" : "/Users/boonseng/Android/sdk/ndk-bundle/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++"
+		}
+	}
+}
