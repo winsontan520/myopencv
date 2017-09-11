@@ -1,6 +1,7 @@
 ### ignore opencv libs due to huge size ###
 app/src/main/jniLibs/
-
+app/.externalNativeBuild/
+ 
 ### Android ###
 # Built application files
 *.apk

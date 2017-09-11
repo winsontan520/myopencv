@@ -19,6 +19,7 @@ android {
     }
     sourceSets {
         main {
+            // folder contain the opencv libs
             jniLibs.srcDirs = ['src/main/jniLibs']
         }
     }

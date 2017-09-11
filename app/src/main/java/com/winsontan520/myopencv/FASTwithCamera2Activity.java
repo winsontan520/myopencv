@@ -129,7 +129,13 @@ public class FASTwithCamera2Activity extends AppCompatActivity {
         } else {
             textureView.setSurfaceTextureListener(textureListener);
         }
-        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_3_0, this, mBaseLoaderCallback);
+        if (OpenCVLoader.initDebug()) {
+            Log.d(TAG, "OpenCV loaded");
+            mBaseLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+        } else {
+            Log.d(TAG, "OpenCV not found");
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_3_0, this, mBaseLoaderCallback);
+        }
     }
 
     @Override
