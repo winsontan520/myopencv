@@ -7,4 +7,5 @@ My OpenCV playground contains
 1. Checkout the source codes open in Android Studio
 2. Open file CMakelists.txt, update your OpenCV sdk path at line "include_directories(YOUR_OPENCV_SDK_PATH/sdk/native/jni/include)"
 3. Find all "OpenCVLoader.OPENCV_VERSION_3_3_0" in projects and replace with your OpenCV version
-4. Run and install
+4. Copy all native libs from your OpencvSdkFolder\sdk\native\libs to myopencv\app\src\main\jniLibs
+5. Run and install
