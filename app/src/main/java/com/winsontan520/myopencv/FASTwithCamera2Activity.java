@@ -33,8 +33,20 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
+import org.opencv.core.KeyPoint;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfByte;
+import org.opencv.core.MatOfKeyPoint;
+import org.opencv.core.Scalar;
+import org.opencv.features2d.FeatureDetector;
+import org.opencv.features2d.Features2d;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
+
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -53,6 +65,7 @@ public class FASTwithCamera2Activity extends AppCompatActivity {
     private static final int REQUEST_CAMERA_PERMISSION = 200;
 
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
+
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
         ORIENTATIONS.append(Surface.ROTATION_90, 0);
@@ -69,6 +82,24 @@ public class FASTwithCamera2Activity extends AppCompatActivity {
     protected CaptureRequest.Builder captureRequestBuilder;
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread;
+    private ImageReader imageReader;
+    private boolean mIsOpenCVReady;
+
+    private BaseLoaderCallback mBaseLoaderCallback = new BaseLoaderCallback(this) {
+        @Override
+        public void onManagerConnected(int status) {
+            switch (status) {
+                case LoaderCallbackInterface.SUCCESS: {
+                    Log.i(TAG, "OpenCV loaded successfully");
+                    mIsOpenCVReady = true;
+                }
+                break;
+                default: {
+                    super.onManagerConnected(status);
+                }
+            }
+        }
+    };
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -98,12 +129,13 @@ public class FASTwithCamera2Activity extends AppCompatActivity {
         } else {
             textureView.setSurfaceTextureListener(textureListener);
         }
+        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_3_0, this, mBaseLoaderCallback);
     }
 
     @Override
     protected void onPause() {
         Log.e(TAG, "onPause");
-        //closeCamera();
+        closeCamera();
         stopBackgroundThread();
         super.onPause();
     }
@@ -113,6 +145,7 @@ public class FASTwithCamera2Activity extends AppCompatActivity {
         mBackgroundThread.start();
         mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
     }
+
     protected void stopBackgroundThread() {
         mBackgroundThread.quitSafely();
         try {
@@ -130,14 +163,17 @@ public class FASTwithCamera2Activity extends AppCompatActivity {
             //open your camera here
             openCamera();
         }
+
         @Override
         public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
             // Transform you image captured size according to the surface width and height
         }
+
         @Override
         public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
             return false;
         }
+
         @Override
         public void onSurfaceTextureUpdated(SurfaceTexture surface) {
         }
@@ -172,10 +208,12 @@ public class FASTwithCamera2Activity extends AppCompatActivity {
             cameraDevice = camera;
             createCameraPreview();
         }
+
         @Override
         public void onDisconnected(CameraDevice camera) {
             cameraDevice.close();
         }
+
         @Override
         public void onError(CameraDevice camera, int error) {
             cameraDevice.close();
@@ -186,12 +224,11 @@ public class FASTwithCamera2Activity extends AppCompatActivity {
     protected void createCameraPreview() {
         try {
             SurfaceTexture texture = textureView.getSurfaceTexture();
-            assert texture != null;
             texture.setDefaultBufferSize(imageDimension.getWidth(), imageDimension.getHeight());
             Surface surface = new Surface(texture);
             captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             captureRequestBuilder.addTarget(surface);
-            cameraDevice.createCaptureSession(Arrays.asList(surface), new CameraCaptureSession.StateCallback(){
+            cameraDevice.createCaptureSession(Arrays.asList(surface), new CameraCaptureSession.StateCallback() {
                 @Override
                 public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
                     //The camera is already closed
@@ -202,6 +239,7 @@ public class FASTwithCamera2Activity extends AppCompatActivity {
                     cameraCaptureSessions = cameraCaptureSession;
                     updatePreview();
                 }
+
                 @Override
                 public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
                     Toast.makeText(FASTwithCamera2Activity.this, "Configuration change", Toast.LENGTH_SHORT).show();
@@ -212,8 +250,19 @@ public class FASTwithCamera2Activity extends AppCompatActivity {
         }
     }
 
+    private void closeCamera() {
+        if (null != cameraDevice) {
+            cameraDevice.close();
+            cameraDevice = null;
+        }
+        if (null != imageReader) {
+            imageReader.close();
+            imageReader = null;
+        }
+    }
+
     protected void updatePreview() {
-        if(null == cameraDevice) {
+        if (null == cameraDevice) {
             Log.e(TAG, "updatePreview error, return");
         }
         captureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
@@ -242,12 +291,12 @@ public class FASTwithCamera2Activity extends AppCompatActivity {
                 width = jpegSizes[0].getWidth();
                 height = jpegSizes[0].getHeight();
             }
-            ImageReader reader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 1);
+            imageReader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 1);
             List<Surface> outputSurfaces = new ArrayList<Surface>(2);
-            outputSurfaces.add(reader.getSurface());
+            outputSurfaces.add(imageReader.getSurface());
             outputSurfaces.add(new Surface(textureView.getSurfaceTexture()));
             final CaptureRequest.Builder captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-            captureBuilder.addTarget(reader.getSurface());
+            captureBuilder.addTarget(imageReader.getSurface());
             captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
             // Orientation
             int rotation = getWindowManager().getDefaultDisplay().getRotation();
@@ -260,12 +309,16 @@ public class FASTwithCamera2Activity extends AppCompatActivity {
                     try {
                         image = reader.acquireLatestImage();
                         ByteBuffer buffer = image.getPlanes()[0].getBuffer();
-                        byte[] bytes = new byte[buffer.capacity()];
+                        byte[] bytes = new byte[buffer.remaining()];
                         buffer.get(bytes);
-                        save(bytes);
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
+
+                        Mat mat = Imgcodecs.imdecode(new MatOfByte(bytes), Imgcodecs.CV_LOAD_IMAGE_UNCHANGED);
+
+                        processImage(mat);
+
+                        //save(bytes);
+
+                    } catch (Exception e) {
                         e.printStackTrace();
                     } finally {
                         if (image != null) {
@@ -286,12 +339,13 @@ public class FASTwithCamera2Activity extends AppCompatActivity {
                     }
                 }
             };
-            reader.setOnImageAvailableListener(readerListener, mBackgroundHandler);
+            imageReader.setOnImageAvailableListener(readerListener, mBackgroundHandler);
             final CameraCaptureSession.CaptureCallback captureListener = new CameraCaptureSession.CaptureCallback() {
                 @Override
                 public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
                     super.onCaptureCompleted(session, request, result);
-                    Toast.makeText(FASTwithCamera2Activity.this, "Saved:" + file, Toast.LENGTH_SHORT).show();
+
+                    //Toast.makeText(FASTwithCamera2Activity.this, "Saved:" + file, Toast.LENGTH_SHORT).show();
                     createCameraPreview();
                 }
             };
@@ -311,6 +365,38 @@ public class FASTwithCamera2Activity extends AppCompatActivity {
             }, mBackgroundHandler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void processImage(Mat mat) {
+        if (!mIsOpenCVReady) {
+            Log.e(TAG, "mIsOpenCVReady " + mIsOpenCVReady);
+            return;
+        }
+
+        MatOfKeyPoint points = new MatOfKeyPoint();
+        try {
+            FeatureDetector fast = FeatureDetector.create(FeatureDetector.FAST);
+            fast.detect(mat, points);
+
+            List<KeyPoint> listOfKeypoints = points.toList();
+            int size = listOfKeypoints.size();
+            Log.d(TAG, "size = " + size);
+
+            Scalar green = new Scalar(0, 255, 0);
+            Mat outputMat = mat.clone();
+            Imgproc.cvtColor(mat, outputMat, Imgproc.COLOR_RGBA2RGB, 4);
+            Features2d.drawKeypoints(outputMat, points, outputMat, green, 1);
+
+            mat.release();
+
+            File outputFile = new File(Environment.getExternalStorageDirectory() + "/output.jpg");
+            Imgcodecs.imwrite(outputFile.getPath(), outputMat);
+
+            Toast.makeText(FASTwithCamera2Activity.this, "Saved:" + outputFile, Toast.LENGTH_SHORT).show();
+
+        } catch (Exception e) {
+            Log.e(TAG, "processImage Error " + e);
         }
     }
 }

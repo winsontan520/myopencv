@@ -41,9 +41,6 @@ public class FASTActivity extends AppCompatActivity implements CameraBridgeViewB
             switch (status) {
                 case LoaderCallbackInterface.SUCCESS: {
                     Log.i(TAG, "OpenCV loaded successfully");
-
-                    // TODO: own cpp
-                    //System.loadLibrary("native-lib");
                     mJavaCameraView.enableView();
                 }
                 break;
@@ -133,6 +130,8 @@ public class FASTActivity extends AppCompatActivity implements CameraBridgeViewB
 
             List<KeyPoint> listOfKeypoints = points.toList();
             int size = listOfKeypoints.size();
+
+            // update numbers of threshold in display
             updateThresholdText(size);
 
             // show visual cue if min threshold reach
@@ -161,5 +160,4 @@ public class FASTActivity extends AppCompatActivity implements CameraBridgeViewB
         });
     }
 
-//    public native void salt(long matAddrGray, int nbrElem);
 }

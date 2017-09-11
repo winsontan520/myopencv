@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Defined Array values to show in ListView
         String[][] values = new String[][]{
-                {"FAST", "Feature detection with FAST. Permission to use camera required."},
+                {"FAST", "Feature detection with FAST. Permission to use camera required. Threshold limit 5000"},
                 {"FAST with Camera2", "Feature detection with FAST using android camera2. Permissions to use camera and write storage required."}
         };
 
