@@ -1,7 +1,8 @@
 # myopencv
 My OpenCV playground contains
-1. Feature detection with FAST using OpenCV Java Camera
-2. Feature detection with FAST for post captured image using Android camera2
+1. Feature detection with FAST using OpenCV Java SDK
+2. Feature detection with FAST for post captured image using Android camera2 using OpenCV Java SDK
+3. Feature detection with FAST using native class to process with OpenCV native libs
 
 # How to use
 1. Checkout the source codes open in Android Studio
