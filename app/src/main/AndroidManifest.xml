@@ -50,7 +50,11 @@
             android:theme="@style/AppTheme.NoActionBar.FullScreen" />
 
         <activity android:name=".FASTwithCamera2Activity" />
-        <activity android:name=".CameraActivity" />
+        <activity
+            android:name=".FASTcustomNativeActivity"
+            android:configChanges="keyboardHidden|orientation"
+            android:screenOrientation="landscape"
+            android:theme="@style/AppTheme.NoActionBar.FullScreen" />
     </application>
 
 </manifest>

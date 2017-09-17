@@ -14,21 +14,15 @@ import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.JavaCameraView;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
-import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfKeyPoint;
-import org.opencv.core.Scalar;
-import org.opencv.features2d.FeatureDetector;
-import org.opencv.features2d.Features2d;
-import org.opencv.imgproc.Imgproc;
 
-import java.util.List;
+import static com.winsontan520.myopencv.MyNativeUtil.fastDetection;
 
 /**
- * Created by Winson Tan on 7/9/17.
+ * Created by Winson Tan on 16/9/17.
  */
 
-public class FASTActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
+public class FASTcustomNativeActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
 
     private static final String TAG = "FASTActivity";
     private static final int DEFAULT_THRESHOLD = 5000;
@@ -41,6 +35,9 @@ public class FASTActivity extends AppCompatActivity implements CameraBridgeViewB
         public void onManagerConnected(int status) {
             switch (status) {
                 case LoaderCallbackInterface.SUCCESS: {
+                    // Load native library after OpenCV initialization
+                    System.loadLibrary("native-lib");
+
                     Log.i(TAG, "OpenCV loaded successfully");
                     mJavaCameraView.enableView();
                 }
@@ -99,7 +96,7 @@ public class FASTActivity extends AppCompatActivity implements CameraBridgeViewB
                 } else {
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
-                    Toast.makeText(FASTActivity.this, "Permission denied to read your External storage", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(FASTcustomNativeActivity.this, "Permission denied to read your External storage", Toast.LENGTH_SHORT).show();
                 }
                 return;
             }
@@ -125,33 +122,21 @@ public class FASTActivity extends AppCompatActivity implements CameraBridgeViewB
     }
 
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        MatOfKeyPoint points = new MatOfKeyPoint();
         try {
-            Mat mat = inputFrame.rgba();
-            FeatureDetector fast = FeatureDetector.create(FeatureDetector.FAST);
-            fast.detect(mat, points);
+            Mat mRgba = inputFrame.rgba();
+            Mat mGray = inputFrame.gray();
 
-            List<KeyPoint> listOfKeypoints = points.toList();
-            int size = listOfKeypoints.size();
+            // pass pointer to native libs to process
+            long detectionSize = MyNativeUtil.fastDetection(mRgba.getNativeObjAddr(), mGray.getNativeObjAddr(), mThreshold);
 
-            // update numbers of threshold in display
-            updatePointDetected(size);
+            // update numbers of size in display
+            updatePointDetected((int) detectionSize);
 
-            // show visual cue if min threshold reach
-            if (size >= mThreshold) {
-                Scalar green = new Scalar(0, 255, 0);
-                Mat mRgba = mat.clone();
-                Imgproc.cvtColor(mat, mRgba, Imgproc.COLOR_RGBA2RGB, 4);
-                Features2d.drawKeypoints(mRgba, points, mRgba, green, 1);
-                mat.release();
-                return mRgba;
-            } else {
-                return mat;
-            }
+            return mRgba;
         } catch (Exception e) {
             Log.e(TAG, "onCameraFrame Error : " + e);
-            return inputFrame.rgba();
         }
+        return inputFrame.rgba();
     }
 
     private void updatePointDetected(final int size) {

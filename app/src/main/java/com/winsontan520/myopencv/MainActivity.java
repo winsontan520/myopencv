@@ -8,12 +8,15 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * Created by Winson Tan on 7/9/17.
@@ -22,8 +25,10 @@ import android.widget.TextView;
 public class MainActivity extends AppCompatActivity {
 
     public static final String TAG = "MainActivity";
+    private static final int DEFAULT_THRESHOLD = 5000;
 
     private Class[] clazzes;
+    private EditText mThresholdEditText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,12 +38,14 @@ public class MainActivity extends AppCompatActivity {
         // Defined Array values to show in ListView
         String[][] values = new String[][]{
                 {"FAST", "Feature detection with FAST. Permission to use camera required. Threshold limit 5000"},
-                {"FAST with Camera2", "Feature detection with FAST using android camera2. Permissions to use camera and write storage required."}
+                {"FAST with Camera2", "Feature detection with FAST using android camera2. Permissions to use camera and write storage required."},
+                {"FAST with custom native lib", "Pass Mat to custom native method to process image with OpenCV FAST detection."}
         };
 
         clazzes = new Class[]{
                 FASTActivity.class,
-                FASTwithCamera2Activity.class
+                FASTwithCamera2Activity.class,
+                FASTcustomNativeActivity.class
         };
 
         ListView lv = (ListView) findViewById(android.R.id.list);
@@ -63,6 +70,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
+        mThresholdEditText = (EditText) findViewById(R.id.threshold_edittext);
+
     }
 
     private void launchActivity(Class clazz) {
@@ -72,7 +82,32 @@ public class MainActivity extends AppCompatActivity {
                     new String[]{Manifest.permission.CAMERA},
                     1);
         } else {
-            startActivity(new Intent(this, clazz));
+            // check threshold enter and pass to next activity
+            int threshold = DEFAULT_THRESHOLD;
+            try {
+                String thresholdString = mThresholdEditText.getText().toString();
+
+                if (thresholdString.length() > 0) {
+                    threshold = Integer.valueOf(thresholdString);
+                    if (threshold <= 0) {
+                        // reset to default value if input invalid
+                        threshold = DEFAULT_THRESHOLD;
+                        mThresholdEditText.setText(String.valueOf(threshold));
+                    }
+                } else {
+                    // reset to default
+                    mThresholdEditText.setText(String.valueOf(threshold));
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Exception " + e);
+                threshold = DEFAULT_THRESHOLD;
+            }
+
+            Toast.makeText(this, "Threshold selected = " + threshold, Toast.LENGTH_SHORT).show();
+
+            Intent intent = new Intent(this, clazz);
+            intent.putExtra("THRESHOLD", threshold);
+            startActivity(intent);
         }
     }
 }
